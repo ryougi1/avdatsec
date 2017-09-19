@@ -1,25 +1,29 @@
 package project2;
 
+import java.math.BigInteger;
+import java.security.SecureRandom;
+import java.util.Random;
+
 public class DH {	
 	public DH() {
 		
 	}
 	
-	public static String[] generateSecret(int g, int p) {
-		int a = (int)(Math.random() * 100 + 1); //Not guaranteed to be always unique;
-		Double dSecret = Math.pow(g, a) % p;
-		int iSecret = dSecret.intValue();
+	public static String[] getRandomNumbers(BigInteger g, BigInteger p) {
+		Random rand = new SecureRandom();
+		BigInteger x, X;
+		
+		x = BigInteger.valueOf(rand.nextInt(100)+1);
+		X = g.modPow(x, p);
+		
 		String[] result = new String[2];
-		result[0]=Integer.toString(iSecret);
-		result[1]=Integer.toString(a);
+		result[0] = x.toString();
+		result[1] = X.toString();
 		return result;
 	}
 	
-	synchronized public static int computeSecret(String m, String a, int p) {
-		int A = Integer.parseInt(a);
-		System.out.println("m equals:"+m);
-		int M = Integer.valueOf(m);
-		int secret = (int) Math.pow(M, A) % p;
-		return secret;
+	synchronized public static String computeSecret(String base, String exponent, BigInteger p) {
+		BigInteger secret = new BigInteger(base.trim()).modPow(new BigInteger(exponent.trim()), p);
+		return secret.toString();
 	}
 }

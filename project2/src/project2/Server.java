@@ -1,6 +1,7 @@
 package project2;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -13,48 +14,43 @@ public class Server extends Thread {
 	private boolean running;
 	private byte[] buf = new byte[256];
 	private DatagramPacket inPacket, outPacket;
-	private int g, p, secret;
+	private BigInteger b, p, g;
 
 	public Server() throws SocketException, UnknownHostException {
 		socket = new DatagramSocket(4455);
 		address = InetAddress.getByName("localhost");
-		p = 23;
-		g = 5;
+		g = new BigInteger("5");
+		p = new BigInteger("23");
 	}
 
 	public void run() {
 		try {
 			running = true;
-
 			while (running) {
+				//Receive packets
 				inPacket = new DatagramPacket(buf, buf.length);
-				try {
-					socket.receive(inPacket);
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				socket.receive(inPacket);
 				InetAddress address = inPacket.getAddress();
 				int port = inPacket.getPort();
-
 				String received = new String(inPacket.getData(), 0, inPacket.getLength());
-				System.out.println("Server recieved:" + received);
+				System.out.println("#2 Server recieved: " + received);
+				
+				//Check message type
 				if (received.equals("end;")) {
 					running = false;
-					continue;
-				} else if(received.contains("connect;")) {
-					//Create response
-					String[] DHres = DH.generateSecret(g, p);
-					byte[] msg = (";"+DHres[0]).getBytes();
-					System.out.println("Server sending:" + (";"+DHres[0]));
+					break;
+				} else if (received.contains("connect;")) {
+					// Calculate DH shared secret and respond to client
+					String[] DHresult = DH.getRandomNumbers(g, p);
+					System.out.println("Server randomizes s = " + DHresult[0] + " and calculates from this S = " + DHresult[1]);
+					byte[] msg = (DHresult[1]).getBytes();
+					System.out.println("#3 Server sent: " + DHresult[1] + " to client.");
 					outPacket = new DatagramPacket(msg, msg.length, address, port);
 					socket.send(outPacket);
-					
-					//Compute secret
-					secret = DH.computeSecret(received.substring(received.indexOf(';')+1), DHres[1], p);
-					System.out.println("Server secret result:" + secret);
+					String secret = DH.computeSecret(received.substring(received.indexOf(';') + 1), DHresult[0], p);
+					System.out.println("-----------------Server shared secret result = " + secret + "-----------------");
 				} else {
-					//Regular encrypted session
+					// Regular encrypted session
 				}
 			}
 			socket.close();

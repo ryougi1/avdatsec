@@ -12,7 +12,7 @@ public class Run {
 			Server server = new Server();
 			server.start();
 			Client client = new Client();
-			client.start();
+			client.run();
 		} catch (SocketException e) {
 			e.printStackTrace();
 		} catch (UnknownHostException e) {
